@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('#compose').addEventListener('click', compose_email);
   
   
-
+  //testing git
+  
   //my code
   document.querySelector('#compose-view').addEventListener('submit', (e)=>{send_email(e)})
   
