@@ -80,10 +80,11 @@ function load_mailbox(mailbox) {
 };
 
 
+
+
 function send_email(e){
   
   e.preventDefault();
-  console.log("alsdkjf");
   
   var dest = document.querySelector('#compose-recipients').value;
   var subject = document.querySelector('#compose-subject').value;
@@ -130,6 +131,7 @@ function displayemail(id) {
           document.getElementById("sender").innerHTML = email.sender
           document.getElementById("subject").innerHTML = email.subject
           document.getElementById("content").innerHTML = email.body
+          document.getElementById("date").innerHTML = email.timestamp
   });
 
   let vol = document.getElementById('voltar');
@@ -140,8 +142,14 @@ function displayemail(id) {
   });
 
   rep.addEventListener('click', event => {
+    
     // inputs for the the reply
-    reply_email()
+    var email = document.querySelector("#sender").innerHTML;
+    var sub = "Re: "+document.querySelector("#subject").innerHTML;
+    var time = document.querySelector("#date").innerHTML
+    var cont = document.querySelector("#content").innerHTML
+    var text = "On " + time +", " + email +" wrote: " +cont  
+    reply_email(email, sub, text)
   });
   
 };
@@ -156,4 +164,15 @@ function fetch_put (id, bolean) {
     })
 
   })
+}
+
+function reply_email(email, assunto, texto){
+
+  compose_email();
+
+  // Pre-preenche os campos
+  document.querySelector('#compose-recipients').value = email;
+  document.querySelector('#compose-subject').value = assunto;
+  document.querySelector('#compose-body').value = texto;
+
 }
