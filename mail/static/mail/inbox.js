@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-
+//funcao para mostrar o campo de escrever e-mail
 function compose_email() {
 
   // Show compose view and hide other views
@@ -29,9 +29,9 @@ function compose_email() {
   document.querySelector('#compose-body').value = '';
 };
 
-
+//funcao para mostrar outras abas, alem da escrever e-mail
 function load_mailbox(mailbox) {
-  
+
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
@@ -39,48 +39,15 @@ function load_mailbox(mailbox) {
   
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+
+  if (mailbox === "sent"){
+    show_sent()    
+  };
   
   if (mailbox === "inbox"){
-    
-    fetch('/emails/inbox')
-    .then(response => response.json())
-    .then(emails => {
-      // Print emails
-      // console.log(emails);
-      // ... do something else with emails ...
-      for (let index = 0; index < emails.length; index++) {
-        // console.log("this is the id: "+emails[index].id+" "+ emails[index].subject)
-        
-        const element = document.createElement('div');
-        element.innerHTML = emails[index].subject + "   from: " +emails[index].sender + " Date:"+emails[index].timestamp;
-        element.className = "individual-email";
-
-      
-      //adjust the read field to false
-      // console.log(emails[index])
-      
-      //Chosses the color of the element
-      if (emails[index].read){
-        element.style.backgroundColor = "white";
-      }else{element.style.backgroundColor = "gray";}
-      
-      element.addEventListener('click', function() {
-        
-        // console.log('This element has been clicked!  ' + emails[index].subject );
-        var email_id = emails[index].id
-        fetch_put(email_id, false);
-        element.style.backgroundColor = "gray";
-        displayemail(email_id)
-      });
-      document.querySelector('#emails-view').append(element);
-    }
-    
-  });
+    show_inbox()  
+  };
 };
-};
-
-
-
 
 function send_email(e){
   
@@ -100,7 +67,8 @@ function send_email(e){
       body: JSON.stringify({
         recipients: dest,
         subject: subject,
-        body: body
+        body: body,
+        read: true,
       })
     })
     .then(response => response.json())
@@ -112,14 +80,12 @@ function send_email(e){
   load_mailbox('sent');
 };
 
-
-function displayemail(id) {
+//mostra o email ao clicar
+function displayemail(id, flow) {
 
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'none';
   document.querySelector('#display-email').style.display = 'block';
-
-  
 
   fetch('/emails/'+id)
   .then(response => response.json())
@@ -127,11 +93,20 @@ function displayemail(id) {
     //       // Print email
           // console.log(email)
           console.log(email)
+          if (flow = "inbox"){
 
-          document.getElementById("sender").innerHTML = email.sender
-          document.getElementById("subject").innerHTML = email.subject
-          document.getElementById("content").innerHTML = email.body
-          document.getElementById("date").innerHTML = email.timestamp
+          document.getElementById("sender").innerHTML = "From: " + email.sender;
+          document.getElementById("subject").innerHTML = "Subject: " + email.subject;
+          document.getElementById("content").innerHTML = email.body;
+          document.getElementById("date").innerHTML = email.timestamp;
+        }
+        if (flow = "sent"){
+          document.getElementById("sender").innerHTML = "To: " + email.recipients;
+          document.getElementById("subject").innerHTML = "Subject: " + email.subject;
+          document.getElementById("content").innerHTML = email.body;
+          document.getElementById("date").innerHTML = email.timestamp;
+
+        }
   });
 
   let vol = document.getElementById('voltar');
@@ -151,9 +126,7 @@ function displayemail(id) {
     var text = "On " + time +", " + email +" wrote: " +cont  
     reply_email(email, sub, text)
   });
-  
 };
-
 
 function fetch_put (id, bolean) {
 
@@ -162,7 +135,6 @@ function fetch_put (id, bolean) {
     body: JSON.stringify({
         "read": bolean
     })
-
   })
 }
 
@@ -174,5 +146,80 @@ function reply_email(email, assunto, texto){
   document.querySelector('#compose-recipients').value = email;
   document.querySelector('#compose-subject').value = assunto;
   document.querySelector('#compose-body').value = texto;
+}
 
+function show_sent(){
+
+
+  fetch('/emails/sent')
+  .then(response => response.json())
+  .then(emails => {
+    // Print emails
+    console.log(emails);
+    // ... do something else with emails ...
+    for (let index = 0; index < emails.length; index++) {
+      // console.log("this is the id: "+emails[index].id+" "+ emails[index].subject)
+      
+      const element = document.createElement('div');
+      element.innerHTML = emails[index].subject + "   to: " +emails[index].recipients + " Date:"+emails[index].timestamp;
+      element.className = "individual-email";
+
+    
+      //adjust the read field to false
+      // console.log(emails[index])
+    
+      element.style.backgroundColor = "white";
+
+      element.addEventListener('click', function() {
+          
+        // console.log('This element has been clicked!  ' + emails[index].subject );
+        var email_id = emails[index].id
+        fetch_put(email_id, false);
+        element.style.backgroundColor = "gray";
+        displayemail(email_id, "sent")
+      });
+
+      document.querySelector('#emails-view').append(element);
+
+    }
+  });
+};
+
+function show_inbox(){
+
+    fetch('/emails/inbox')
+      .then(response => response.json())
+      .then(emails => {
+        // Print emails
+        // console.log(emails);
+        // ... do something else with emails ...
+        for (let index = 0; index < emails.length; index++) {
+          // console.log("this is the id: "+emails[index].id+" "+ emails[index].subject)
+          
+          const element = document.createElement('div');
+          element.innerHTML = emails[index].subject + "   from: " +emails[index].sender + " Date:"+emails[index].timestamp;
+          element.className = "individual-email";
+
+        
+        //adjust the read field to false
+        // console.log(emails[index])
+        
+        //Chosses the color of the element: if the read field is true, than backgroundColor = white, else, gray.
+        // white means unread, gray means read
+
+        if (emails[index].read){
+          element.style.backgroundColor = "white";
+        }else{element.style.backgroundColor = "gray";}
+        
+        element.addEventListener('click', function() {
+          
+          // console.log('This element has been clicked!  ' + emails[index].subject );
+          var email_id = emails[index].id
+          fetch_put(email_id, false);
+          element.style.backgroundColor = "gray";
+          displayemail(email_id, "inbox")
+        });
+        document.querySelector('#emails-view').append(element);
+        }
+      }); 
 }
